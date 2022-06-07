@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Create an S3 bucket setup to host a static website.
+
+Parameters:
+  BucketName:
+    Description: Name of the bucket to create
+    Type: String
+  
+  UseRoute53Domain:
+    Description: Specify to use the selected Route53 domain.  If True, it is required to have selected
+      a route 53 domain.
+    Type: String
+    AllowedValues:
+      - Yes
+      - No
+    Default: No
+
+  Domain:
+    Description: Select a domain from Route53 to link to.  Will create `{BucketName}.{Domain}`.  Ignored if
+      `UseRoute53Domain` is "No".
+    Type: AWS::Route53::HostedZone::Id
+    Default: ""
+
+    
+
+Resources:
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration: 
+        IndexDocument: index.html
+      
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Principal: "*"
+            Resource: !Join
+              - ""
+              - - !GetAtt S3Bucket.Arn
+                - /*
